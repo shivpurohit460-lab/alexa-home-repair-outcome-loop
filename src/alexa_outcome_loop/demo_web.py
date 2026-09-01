@@ -9,16 +9,16 @@ from starlette.routing import Route
 from .demo_engine import build_demo_timeline
 
 
-async def home(request) -> FileResponse:  # noqa: ARG001
+async def home(request) -> FileResponse:
     page = files("alexa_outcome_loop").joinpath("static/index.html")
     return FileResponse(page)
 
 
-async def health(request) -> JSONResponse:  # noqa: ARG001
+async def health(request) -> JSONResponse:
     return JSONResponse({"status": "ok", "surface": "simulated_alexa_plus"})
 
 
-async def run_demo(request) -> JSONResponse:  # noqa: ARG001
+async def run_demo(request) -> JSONResponse:
     return JSONResponse(build_demo_timeline())
 
 
