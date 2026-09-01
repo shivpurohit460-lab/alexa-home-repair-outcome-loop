@@ -27,24 +27,27 @@ Most assistants stop when an action reports success. This prototype keeps respon
 ```text
 Simulated Alexa+ experience
         |
-        v
-Strands agent + Amazon Bedrock
+        +--> public judge simulator (GitHub Pages)
         |
-        v
-Self-hosted MCP server (Streamable HTTP)
-        |
-        +--> deterministic service simulator
-        +--> deterministic thermostat/home-state simulator
+        +--> Strands agent + Amazon Bedrock
+                  |
+                  +--> AgentCore Runtime: traced direct adapters to the six domain operations
+                  |
+                  +--> MCP transport: independently tested Streamable HTTP server at /mcp
+
+Deterministic service + thermostat simulators
         |
         v
 Outcome verification + recovery loop
 ```
 
-The MCP server uses MCP Python SDK `>=1.23.1,<2`, which implements protocol revision `2025-11-25` and stays compatible with the current Strands 1.x dependency range. It exposes Streamable HTTP at `/mcp`.
+The two tool transports intentionally share the same domain implementation. The AgentCore adapter keeps the AWS runtime self-contained for deployment and returns an auditable per-invocation tool trace. The MCP server remains the Alexa+-compatible transport surface and is independently exercised through a real Streamable HTTP round trip.
+
+The MCP server uses MCP Python SDK `>=1.23.1,<2`, which implements protocol revision `2025-11-25` and stays compatible with the current Strands 1.x dependency range. It binds to `0.0.0.0:8000/mcp`, matching the Amazon Bedrock AgentCore MCP runtime contract.
 
 ## Quick start
 
-Requires Python 3.11+.
+Requires Python 3.11+ for local development. CI validates Python 3.13, which is the current AgentCore deployment target for this project.
 
 ```bash
 python -m venv .venv
@@ -81,15 +84,24 @@ export BEDROCK_MODEL_ID=global.anthropic.claude-sonnet-4-6
 export MCP_SERVER_URL=http://127.0.0.1:8000/mcp
 ```
 
-Then:
+Then run the MCP-backed local agent:
 
 ```bash
 python -m alexa_outcome_loop.agent "My AC is broken. Handle it and make sure it is actually fixed."
 ```
 
-## AgentCore
+## Amazon Bedrock AgentCore
 
-`src/alexa_outcome_loop/agentcore_app.py` contains a minimal `BedrockAgentCoreApp` entry point. Deployment comes after local validation.
+`src/alexa_outcome_loop/agentcore_app.py` is the AgentCore Runtime entry point. It uses Strands + Amazon Bedrock and the same six domain operations through traced direct adapters in `agentcore_tools.py`.
+
+Current status:
+
+- code-ready and CI-tested on Python 3.13
+- default Bedrock model: `global.anthropic.claude-sonnet-4-6`
+- per-invocation tool trace returned with the response
+- live deployment into an AWS account is **not yet claimed**
+
+AWS deployment requires configured AWS credentials, model access, and the current `@aws/agentcore` CLI. We treat successful remote invocation as a separate build gate rather than assuming deployment from code alone.
 
 ## Safety / scope
 
