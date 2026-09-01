@@ -38,19 +38,21 @@ def _wait_for_port(port: int, timeout_seconds: float = 10.0) -> None:
 
 async def _round_trip(port: int) -> None:
     url = f"http://127.0.0.1:{port}/mcp"
-    async with streamablehttp_client(url) as (read_stream, write_stream, _):
-        async with ClientSession(read_stream, write_stream) as session:
-            await session.initialize()
+    async with (
+        streamablehttp_client(url) as (read_stream, write_stream, _),
+        ClientSession(read_stream, write_stream) as session,
+    ):
+        await session.initialize()
 
-            tools = await session.list_tools()
-            assert {tool.name for tool in tools.tools} == EXPECTED_TOOLS
+        tools = await session.list_tools()
+        assert {tool.name for tool in tools.tools} == EXPECTED_TOOLS
 
-            result = await session.call_tool(
-                "create_repair_case",
-                arguments={"issue": "AC not cooling", "target_temperature_c": 24.0},
-            )
-            assert result.content
-            assert "repair-" in str(result.content)
+        result = await session.call_tool(
+            "create_repair_case",
+            arguments={"issue": "AC not cooling", "target_temperature_c": 24.0},
+        )
+        assert result.content
+        assert "repair-" in str(result.content)
 
 
 def test_real_streamable_http_round_trip() -> None:
