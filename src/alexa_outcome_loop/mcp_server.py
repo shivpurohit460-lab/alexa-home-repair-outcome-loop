@@ -6,6 +6,8 @@ from . import tools
 
 mcp = FastMCP(
     "Alexa Home Repair Outcome Loop",
+    host="0.0.0.0",
+    port=8000,
     instructions=(
         "Coordinate home-repair cases. Never treat provider-side completion as final closure. "
         "Use read_home_state and verify_outcome before declaring the user's goal achieved; "
