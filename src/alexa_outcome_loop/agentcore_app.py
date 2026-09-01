@@ -3,37 +3,48 @@ from __future__ import annotations
 import os
 
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
-from mcp.client.streamable_http import streamablehttp_client
 from strands import Agent
-from strands.tools.mcp import MCPClient
 
 from .agent import SYSTEM_PROMPT
+from .agentcore_tools import CLOUD_TOOLS, get_tool_trace, reset_tool_trace
 
 app = BedrockAgentCoreApp()
 
 
-@app.entrypoint
-def invoke(payload: dict) -> dict:
-    """AgentCore Runtime entry point.
+def build_cloud_agent() -> Agent:
+    """Build the Strands agent used inside Amazon Bedrock AgentCore Runtime.
 
-    The MCP server URL is intentionally supplied through configuration so the same
-    agent can target local development or a deployed self-hosted MCP endpoint.
+    The cloud runtime uses the same six domain operations as the MCP server through
+    direct Strands adapters. This keeps the AgentCore deployment self-contained while
+    preserving the independently tested MCP transport for the Alexa+ track.
     """
+    model_id = os.getenv("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet-4-6")
+    return Agent(model=model_id, tools=CLOUD_TOOLS, system_prompt=SYSTEM_PROMPT)
+
+
+def invoke_payload(payload: dict, agent: Agent | None = None) -> dict:
+    """Execute one AgentCore invocation and return an auditable tool trace."""
     prompt = str(payload.get("prompt", "")).strip()
     if not prompt:
         return {"error": "payload.prompt is required"}
 
-    mcp_url = os.getenv("MCP_SERVER_URL", "http://127.0.0.1:8000/mcp")
-    model_id = os.getenv("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet-4-6")
-    client = MCPClient(
-        lambda: streamablehttp_client(mcp_url),
-        application_name="alexa-home-repair-outcome-loop-agentcore",
-    )
+    reset_tool_trace()
+    runtime_agent = agent or build_cloud_agent()
+    result = runtime_agent(prompt)
 
-    with client:
-        agent = Agent(model=model_id, tools=[client], system_prompt=SYSTEM_PROMPT)
-        result = agent(prompt)
-        return {"result": str(result)}
+    return {
+        "result": str(result),
+        "runtime": "amazon-bedrock-agentcore",
+        "framework": "strands-agents",
+        "model_id": os.getenv("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet-4-6"),
+        "tool_trace": get_tool_trace(),
+    }
+
+
+@app.entrypoint
+def invoke(payload: dict) -> dict:
+    """Amazon Bedrock AgentCore Runtime entry point."""
+    return invoke_payload(payload)
 
 
 if __name__ == "__main__":
