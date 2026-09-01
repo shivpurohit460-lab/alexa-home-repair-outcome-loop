@@ -13,7 +13,7 @@ authors = [
   { name = "PUROHIT SHIVKUMAR VIJAY" }
 ]
 dependencies = [
-  "mcp>=2,<3",
+  "mcp>=1.23.1,<2",
   "strands-agents>=1.53,<2",
   "bedrock-agentcore>=1,<2",
   "uvicorn>=0.30,<1",

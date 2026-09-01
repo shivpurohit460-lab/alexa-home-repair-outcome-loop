@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
+from mcp.client.streamable_http import streamablehttp_client
 from strands import Agent
 from strands.tools.mcp import MCPClient
 
@@ -24,7 +25,10 @@ def invoke(payload: dict) -> dict:
 
     mcp_url = os.getenv("MCP_SERVER_URL", "http://127.0.0.1:8000/mcp")
     model_id = os.getenv("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet-4-6")
-    client = MCPClient(url=mcp_url, application_name="alexa-home-repair-outcome-loop-agentcore")
+    client = MCPClient(
+        lambda: streamablehttp_client(mcp_url),
+        application_name="alexa-home-repair-outcome-loop-agentcore",
+    )
 
     with client:
         agent = Agent(model=model_id, tools=[client], system_prompt=SYSTEM_PROMPT)

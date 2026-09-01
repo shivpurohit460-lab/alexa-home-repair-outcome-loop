@@ -1,16 +1,18 @@
 from __future__ import annotations
 
-from mcp.server import MCPServer
+from mcp.server.fastmcp import FastMCP
 
 from . import tools
 
-mcp = MCPServer(
+mcp = FastMCP(
     "Alexa Home Repair Outcome Loop",
     instructions=(
         "Coordinate home-repair cases. Never treat provider-side completion as final closure. "
         "Use read_home_state and verify_outcome before declaring the user's goal achieved; "
         "if verification fails, use reopen_or_escalate_case."
     ),
+    stateless_http=True,
+    json_response=True,
 )
 
 
@@ -58,17 +60,11 @@ def reopen_or_escalate_case(case_id: str, reason: str | None = None) -> dict:
     return tools.reopen_or_escalate_case(case_id, reason)
 
 
-# Current MCP Python SDK v2 exposes Streamable HTTP at /mcp.
 app = mcp.streamable_http_app()
 
 
 def main() -> None:
-    mcp.run(
-        transport="streamable-http",
-        host="0.0.0.0",
-        port=8000,
-        json_response=True,
-    )
+    mcp.run(transport="streamable-http")
 
 
 if __name__ == "__main__":

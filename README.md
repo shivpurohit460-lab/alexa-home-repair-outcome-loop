@@ -40,7 +40,7 @@ Self-hosted MCP server (Streamable HTTP)
 Outcome verification + recovery loop
 ```
 
-The MCP server is built against the current stable MCP Python SDK v2 line and exposes Streamable HTTP at `/mcp`.
+The MCP server uses MCP Python SDK `>=1.23.1,<2`, which implements protocol revision `2025-11-25` and stays compatible with the current Strands 1.x dependency range. It exposes Streamable HTTP at `/mcp`.
 
 ## Quick start
 
