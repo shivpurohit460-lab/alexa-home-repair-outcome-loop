@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import sys
 from pathlib import Path
 
@@ -8,7 +9,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from alexa_outcome_loop.agentcore_app import app  # noqa: E402
+app = importlib.import_module("alexa_outcome_loop.agentcore_app").app
 
 
 if __name__ == "__main__":
