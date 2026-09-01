@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Outcome Loop · Simulated Alexa+ Demo</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0d1117; --panel:#151b23; --line:#2a3340; --text:#f4f7fb; --muted:#9aa7b6; --accent:#58a6ff; --ok:#46c37b; --warn:#f2c14e; --bad:#ff6b6b; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif; background:radial-gradient(circle at 15% 0%,#162333 0,var(--bg) 42%); color:var(--text); min-height:100vh; }
+    main { width:min(1080px,92vw); margin:0 auto; padding:38px 0 60px; }
+    .eyebrow { color:var(--accent); font-size:.78rem; text-transform:uppercase; letter-spacing:.12em; font-weight:800; }
+    h1 { font-size:clamp(2rem,5vw,4rem); line-height:.98; margin:.5rem 0 1rem; max-width:850px; }
+    .lede { color:var(--muted); font-size:1.05rem; max-width:760px; line-height:1.65; }
+    .disclosure { margin:20px 0; padding:12px 14px; border:1px solid #34506b; background:#101c28; border-radius:12px; color:#b9cee3; font-size:.88rem; }
+    .grid { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.35fr); gap:22px; margin-top:28px; }
+    .panel { background:color-mix(in srgb,var(--panel) 94%,transparent); border:1px solid var(--line); border-radius:20px; padding:22px; box-shadow:0 18px 50px rgba(0,0,0,.22); }
+    .bubble { background:#203044; border-radius:18px 18px 4px 18px; padding:16px; line-height:1.5; margin:18px 0; }
+    .assistant { background:#17222e; border-radius:18px 18px 18px 4px; color:#cbd8e6; }
+    button { width:100%; border:0; border-radius:14px; padding:14px 18px; font-weight:800; font-size:1rem; cursor:pointer; background:linear-gradient(135deg,#4aa3ff,#7d67ff); color:white; }
+    button:disabled { opacity:.55; cursor:wait; }
+    .metric { margin-top:18px; border-top:1px solid var(--line); padding-top:16px; display:flex; justify-content:space-between; color:var(--muted); }
+    .metric strong { color:var(--text); }
+    ol { list-style:none; padding:0; margin:0; display:grid; gap:11px; }
+    li { display:grid; grid-template-columns:34px 1fr; gap:12px; padding:13px; border:1px solid var(--line); border-radius:14px; opacity:.44; transform:translateY(4px); transition:.3s ease; }
+    li.live { opacity:1; transform:none; }
+    .num { width:30px; height:30px; display:grid; place-items:center; border-radius:50%; background:#263343; font-weight:800; font-size:.8rem; }
+    li[data-tone="failure"] .num { background:#4a2529; color:#ff9797; }
+    li[data-tone="warning"] .num { background:#453a1e; color:#ffd76a; }
+    li[data-tone="success"] .num { background:#173b29; color:#68e49d; }
+    .event-title { font-weight:800; margin-bottom:3px; }
+    .event-detail { color:var(--muted); font-size:.9rem; line-height:1.4; }
+    .principle { margin-top:20px; padding:17px; border-left:3px solid var(--accent); background:#111922; border-radius:8px 14px 14px 8px; font-weight:750; }
+    @media (max-width:760px) { .grid { grid-template-columns:1fr; } main{padding-top:24px;} }
+    @media (prefers-reduced-motion:reduce) { * { transition:none!important; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Amazon Developer Hackathon 2026 · Prototype</div>
+  <h1>Don't stop at “done.” Verify the outcome.</h1>
+  <p class="lede">A simulated Alexa+ experience for home repair. The agent keeps responsibility open until provider status and observable home state agree.</p>
+  <div class="disclosure">SIMULATED EXPERIENCE · Provider and thermostat values are deterministic synthetic data. The verification and recovery logic is real application logic exposed by this repository.</div>
+
+  <section class="grid">
+    <div class="panel">
+      <div class="eyebrow">Conversation</div>
+      <div class="bubble">“Alexa, my AC is broken. Handle it and make sure it is actually fixed.”</div>
+      <div class="bubble assistant" id="assistantText">I’ll track the repair through the actual outcome—not just the provider’s completion signal.</div>
+      <button id="runButton">Run outcome loop</button>
+      <div class="metric"><span>Final state</span><strong id="finalState">Ready</strong></div>
+      <div class="principle">Provider complete ≠ home recovered.</div>
+    </div>
+
+    <div class="panel">
+      <div class="eyebrow">Outcome timeline</div>
+      <ol id="timeline" aria-live="polite"></ol>
+    </div>
+  </section>
+</main>
+<script>
+const button = document.getElementById('runButton');
+const timeline = document.getElementById('timeline');
+const finalState = document.getElementById('finalState');
+const assistantText = document.getElementById('assistantText');
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function renderShell(events) {
+  timeline.innerHTML = events.map(e => `
+    <li data-step="${e.step}" data-tone="${e.tone}">
+      <div class="num">${e.step}</div>
+      <div><div class="event-title">${e.title}</div><div class="event-detail">${e.detail}</div></div>
+    </li>`).join('');
+}
+
+button.addEventListener('click', async () => {
+  button.disabled = true;
+  button.textContent = 'Running…';
+  finalState.textContent = 'Tracking';
+  assistantText.textContent = 'Repair booked. I will verify the room state before I call this fixed.';
+  try {
+    const response = await fetch('/api/demo/run', {method:'POST'});
+    if (!response.ok) throw new Error('Demo API failed');
+    const data = await response.json();
+    renderShell(data.events);
+    for (const event of data.events) {
+      await sleep(520);
+      document.querySelector(`[data-step="${event.step}"]`).classList.add('live');
+      if (event.state === 'verification_failed') assistantText.textContent = 'The provider says complete, but the room is still too warm. I’m reopening the case.';
+      if (event.state === 'verified_resolved') assistantText.textContent = 'Now it’s verified: provider completion and home-state evidence agree.';
+    }
+    finalState.textContent = data.verified ? 'Verified resolved' : 'Still open';
+  } catch (error) {
+    finalState.textContent = 'Demo error';
+    assistantText.textContent = error.message;
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Run again';
+  }
+});
+</script>
+</body>
+</html>

@@ -16,6 +16,7 @@ dependencies = [
   "mcp>=1.23.1,<2",
   "strands-agents>=1.53,<2",
   "bedrock-agentcore>=1,<2",
+  "starlette>=0.46.2,<2",
   "uvicorn>=0.30,<1",
 ]
 
@@ -28,6 +29,7 @@ dev = [
 [project.scripts]
 outcome-loop-agent = "alexa_outcome_loop.agent:main"
 outcome-loop-mcp = "alexa_outcome_loop.mcp_server:main"
+outcome-loop-demo = "alexa_outcome_loop.demo_web:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/alexa_outcome_loop"]
