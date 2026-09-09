@@ -14,16 +14,16 @@ Core idea: Most assistants stop when an action reports success. This project kee
 | MCP tool surface | PASS | Six frozen tools exposed through MCP. |
 | Streamable HTTP MCP round trip | PASS | HTTP-level integration test completed in prior build gate. |
 | Simulated Alexa+ judge experience | PASS | Source is in the repository. |
-| Public GitHub Pages simulator | PASS | Pages build/deploy workflow completed successfully on current `main`. |
+| Public GitHub Pages simulator | PASS | Pages build/deploy succeeded and the public URL completed the full seven-step flow on a real Android mobile browser. See `RUNTIME_EVIDENCE.md`. |
 | CI / lint / tests | PASS | Current `main` CI completed successfully on Python 3.13. |
 | Open-source license | PASS | MIT `LICENSE` present in public repository. |
 | AgentCore integration code | PASS (code/CI) | Runtime entry point, traced adapters and deployment config are present. |
 | Live AgentCore + Bedrock deployment | BLOCKED EXTERNALLY | AWS account verification is blocking CloudShell/Bedrock. Internal AWS service-team escalation raised. No live deployment claimed yet. |
 | Product feedback | DRAFTED | See `PRODUCT_FEEDBACK_DRAFT.md`; update after live AWS gate if it becomes available. |
 | Friction log | DRAFTED | See `FRICTION_LOG.md`. |
-| Demo video (<3 min, English) | TODO | Script, record, edit, upload to YouTube/Vimeo. |
-| Devpost project/draft | TODO | Create only after submission copy is reviewed. |
-| Final submission answers | TODO | Complete all required custom fields and evidence URLs. |
+| Demo video (<3 min, English) | SCRIPT PASS / RECORDING TODO | Judge narration and shot plan are frozen in `DEMO_VIDEO_SCRIPT.md`; record/edit/upload next. |
+| Devpost project/draft | DRAFT CREATED | Devpost draft project exists for the Amazon Developer Hackathon; project copy and links can now be hardened without submitting. |
+| Final submission answers | TODO | Complete required custom fields, track/mini-challenge choices and evidence URLs only after final compliance audit. |
 
 ## Alexa+ primary-track compliance
 
@@ -75,6 +75,7 @@ The project is a new public repository created during the hackathon window and c
 - Full text description
 - Built-with technologies
 - Public GitHub repository URL
+- Public judge simulator URL
 
 ### Demo video
 
@@ -110,7 +111,7 @@ Submission-ready entry must include:
 
 The AWS verification incident now has a structured draft in `FRICTION_LOG.md`.
 
-## 3-minute judge story — working structure
+## 3-minute judge story — frozen structure
 
 ### 0:00–0:20 — Problem
 
@@ -153,9 +154,9 @@ Close on the principle:
 
 ## Next execution order
 
-1. Review and merge this Gate 6 documentation branch after CI passes.
-2. Create the Devpost project draft with the reviewed name/tagline/description.
-3. Write the final 3-minute narration from the frozen judge story.
-4. Record the deterministic simulator and technical proof.
-5. Keep AWS Gate 5B isolated; rerun it immediately if account access is restored.
-6. Final compliance audit against the live submission form before submitting.
+1. Merge Gate 8 runtime-evidence documentation after CI passes.
+2. Harden the existing Devpost draft with reviewed tagline, description, technologies, repository URL and public simulator URL.
+3. Fetch the live submission requirements and map every required field before any submission attempt.
+4. Record/edit the frozen under-3-minute demo video and upload publicly to YouTube or Vimeo.
+5. Keep AWS Gate 5B isolated; rerun it immediately if AWS restores account access.
+6. Perform the final compliance/truth-boundary audit, then submit only when all mandatory gates are complete.
