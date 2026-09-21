@@ -18,7 +18,7 @@ Core idea: Most assistants stop when an action reports success. This project kee
 | CI / lint / tests | PASS | Current `main` CI completed successfully on Python 3.13. |
 | Open-source license | PASS | MIT `LICENSE` present in public repository. |
 | AgentCore integration code | PASS (code/CI) | Runtime entry point, traced adapters and deployment config are present. |
-| Live AgentCore + Bedrock deployment | BLOCKED EXTERNALLY | AWS account verification is blocking CloudShell/Bedrock. Internal AWS service-team escalation raised. No live deployment claimed yet. |
+| Live AgentCore + Bedrock deployment | BLOCKED EXTERNALLY / NARROWED | 21 Sep read-only AWS re-audit: identity, Bedrock catalog/inference-profile listing and AgentCore control-plane listing succeed; `global.anthropic.claude-sonnet-4-6` is ACTIVE; live `Converse` still fails with AWS account-verification `AccessDeniedException`; no AgentCore runtimes exist. No live deployment claimed. |
 | Product feedback | DRAFTED | See `PRODUCT_FEEDBACK_DRAFT.md`; update after live AWS gate if it becomes available. |
 | Friction log | DRAFTED | See `FRICTION_LOG.md`. |
 | Demo video (<3 min, English) | SCRIPT PASS / RECORDING TODO | Judge narration and shot plan are frozen in `DEMO_VIDEO_SCRIPT.md`; record/edit/upload next. |
@@ -53,7 +53,7 @@ Preferred proof gate:
 - returned response includes the runtime path and a real `tool_trace`,
 - screenshots/log evidence is preserved before cleanup.
 
-If AWS account access is not restored in time, submit the Alexa+ primary track without overstating AWS Builder eligibility.
+If AWS inference access remains verification-blocked in time, submit the Alexa+ primary track without overstating AWS Builder eligibility. The 21 Sep control-plane re-audit proves partial AWS access only; it does not prove a live model response or AgentCore runtime.
 
 ## Open Source mini-challenge decision
 
@@ -158,5 +158,5 @@ Close on the principle:
 2. Harden the existing Devpost draft with reviewed tagline, description, technologies, repository URL and public simulator URL.
 3. Fetch the live submission requirements and map every required field before any submission attempt.
 4. Record/edit the frozen under-3-minute demo video and upload publicly to YouTube or Vimeo.
-5. Keep AWS Gate 5B isolated; rerun it immediately if AWS restores account access.
+5. Keep AWS Gate 5B isolated; rerun only after the AWS verification block clears and use a scoped non-root IAM deployment identity.
 6. Perform the final compliance/truth-boundary audit, then submit only when all mandatory gates are complete.

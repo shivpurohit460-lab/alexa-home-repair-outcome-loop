@@ -35,10 +35,15 @@ def test_private_aws_target_and_runtime_outputs_are_gitignored() -> None:
 def test_cloudshell_runner_has_fail_closed_ordering() -> None:
     script = (ROOT / "scripts" / "gate5b_cloudshell.sh").read_text()
 
+    identity_check = script.index("aws sts get-caller-identity --query Arn")
+    root_guard = script.index("Refusing AgentCore deployment from the AWS root identity")
+    assert "@aws/agentcore@0.30.0" in script
+    assert "aws-cdk@2.1142.0" in script
+
     model_check = script.index("aws bedrock-runtime converse")
     validation = script.index("agentcore validate")
     dry_run = script.index('agentcore deploy --target "${TARGET_NAME}" --dry-run')
     live_deploy = script.index('agentcore deploy --target "${TARGET_NAME}" --yes --verbose')
     remote_invoke = script.index("agentcore invoke")
 
-    assert model_check < validation < dry_run < live_deploy < remote_invoke
+    assert identity_check < root_guard < model_check < validation < dry_run < live_deploy < remote_invoke

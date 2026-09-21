@@ -18,6 +18,20 @@
 6. After seven days, opened a live AWS Support chat on the existing case.
 7. AWS Support confirmed that an internal service-team escalation was raised and that no further documentation or verification was required from the account holder at that time.
 
+## 21 Sep 2026 re-audit delta
+
+Fresh read-only AWS evidence narrowed the blocker:
+
+- AWS identity lookup succeeds.
+- Bedrock model catalog and inference-profile listing succeed in Mumbai and Oregon.
+- `global.anthropic.claude-sonnet-4-6` is present as an ACTIVE system-defined inference profile.
+- AgentCore control-plane listing succeeds, with **zero AgentCore runtimes currently deployed**.
+- A bounded live Bedrock `Converse` probe still fails closed with `AccessDeniedException` stating that the account is currently being verified.
+- AWS account summary reports MFA enabled and no root access keys present.
+- The active AWS identity observed during the audit resolves to the account root identity. The Gate 5B deployment script is therefore hardened to refuse deployment from root and require a scoped IAM deployment identity.
+
+**Current interpretation:** control-plane visibility is partially restored, but live model inference and AgentCore deployment remain blocked/unproven. The original verification incident is therefore **not closed**.
+
 ## Expected result
 
 After completing account verification, CloudShell should become available within the window communicated by the console so the authenticated deployment sequence can:

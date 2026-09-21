@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextvars import ContextVar
 from copy import deepcopy
 from typing import Any
 
@@ -7,27 +8,32 @@ from strands import tool
 
 from . import tools as domain_tools
 
-_TOOL_TRACE: list[dict[str, Any]] = []
+# AgentCore can process more than one invocation in the same runtime process.
+# ContextVar keeps audit traces invocation-local instead of sharing one mutable
+# module-level list across concurrent requests.
+_TOOL_TRACE: ContextVar[tuple[dict[str, Any], ...]] = ContextVar(
+    "alexa_outcome_loop_tool_trace",
+    default=(),
+)
 
 
 def reset_tool_trace() -> None:
-    """Clear the per-invocation tool trace used for demo evidence and tests."""
-    _TOOL_TRACE.clear()
+    """Clear the current invocation's tool trace."""
+    _TOOL_TRACE.set(())
 
 
 def get_tool_trace() -> list[dict[str, Any]]:
-    """Return a defensive copy so callers cannot mutate runtime trace state."""
-    return deepcopy(_TOOL_TRACE)
+    """Return a defensive copy of the current invocation's trace."""
+    return deepcopy(list(_TOOL_TRACE.get()))
 
 
 def _record(name: str, arguments: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
-    _TOOL_TRACE.append(
-        {
-            "tool": name,
-            "arguments": deepcopy(arguments),
-            "result": deepcopy(result),
-        }
-    )
+    event = {
+        "tool": name,
+        "arguments": deepcopy(arguments),
+        "result": deepcopy(result),
+    }
+    _TOOL_TRACE.set((*_TOOL_TRACE.get(), event))
     return result
 
 

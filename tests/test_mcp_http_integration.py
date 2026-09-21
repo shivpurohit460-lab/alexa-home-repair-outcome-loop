@@ -42,7 +42,8 @@ async def _round_trip(port: int) -> None:
         streamablehttp_client(url) as (read_stream, write_stream, _),
         ClientSession(read_stream, write_stream) as session,
     ):
-        await session.initialize()
+        initialize_result = await session.initialize()
+        assert initialize_result.protocolVersion >= "2025-11-25"
 
         tools = await session.list_tools()
         assert {tool.name for tool in tools.tools} == EXPECTED_TOOLS

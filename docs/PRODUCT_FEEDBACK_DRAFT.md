@@ -1,6 +1,6 @@
 # Product Feedback Draft — Amazon Developer Hackathon 2026
 
-> Draft for Devpost submission. Keep facts separated from planned/live-unverified integrations. Update after Gate 5B if AWS account access is restored.
+> Draft for Devpost submission. Keep facts separated from planned/live-unverified integrations. Fresh 21 Sep evidence proves AWS control-plane reads but not live model inference or AgentCore deployment.
 
 ## MCP / Streamable HTTP
 
@@ -44,7 +44,7 @@ The repository contains an AgentCore Runtime entry point, deployment configurati
 
 ### What needs work
 
-Live deployment has **not yet been verified** because the AWS account remained stuck in an account-verification state that blocked CloudShell and Bedrock access. This is recorded separately in `FRICTION_LOG.md`.
+Live deployment has **not yet been verified**. On 21 Sep, AWS identity, Bedrock catalog/inference-profile listing, and AgentCore control-plane listing succeeded, but a bounded Bedrock `Converse` request still failed with an account-verification `AccessDeniedException`. No AgentCore runtime is deployed. This is recorded separately in `FRICTION_LOG.md`.
 
 The deployment experience would benefit from clearer separation between:
 
@@ -75,7 +75,7 @@ Claude Sonnet 4.6 through Amazon Bedrock is configured as the model for the Stra
 - model configuration exists in code,
 - integration paths are CI-tested without claiming a live model response,
 - a minimal live `READY` model-access check is part of Gate 5B,
-- that live check has not yet run successfully because AWS service access is account-verification blocked.
+- the 21 Sep live `Converse` check was attempted and failed closed with AWS account-verification `AccessDeniedException`; control-plane listing works, but inference is still blocked.
 
 Do not convert this section into a positive live-performance claim until Gate 5B passes.
 
