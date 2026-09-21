@@ -26,6 +26,13 @@ if (( NODE_MAJOR < 20 )); then
   exit 13
 fi
 
+CALLER_ARN="$(aws sts get-caller-identity --query Arn --output text)"
+if [[ "${CALLER_ARN}" == arn:aws:iam::*:root ]]; then
+  echo "ERROR: Refusing AgentCore deployment from the AWS root identity."
+  echo "Use a scoped IAM deployment role or user with MFA-backed access instead."
+  exit 16
+fi
+
 ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 if [[ ! "${ACCOUNT_ID}" =~ ^[0-9]{12}$ ]]; then
   echo "ERROR: Could not resolve a valid AWS account from the active CloudShell identity."
