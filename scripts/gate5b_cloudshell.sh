@@ -49,8 +49,8 @@ fi
 
 uv python install 3.13 >/dev/null
 
-echo "Installing/updating AgentCore CLI and AWS CDK..."
-npm install -g @aws/agentcore aws-cdk >/dev/null
+echo "Installing pinned AgentCore CLI and AWS CDK..."
+npm install -g @aws/agentcore@0.30.0 aws-cdk@2.1142.0 >/dev/null
 
 cat > agentcore/aws-targets.json <<EOF
 [
