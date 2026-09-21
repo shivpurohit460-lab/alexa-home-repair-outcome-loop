@@ -21,7 +21,7 @@ The script deliberately performs these gates in order:
 1. Verify the active AWS identity without printing the account ID.
 2. Refuse deployment when the caller is the AWS root identity; use a scoped IAM deployment role/user instead.
 3. Use Mumbai as the AWS region.
-4. Ensure `uv`, AgentCore CLI, and AWS CDK are available.
+4. Ensure `uv` is available and install the audited deployment toolchain pinned to `@aws/agentcore@0.30.0` and `aws-cdk@2.1142.0`.
 5. Generate a local, gitignored `agentcore/aws-targets.json`.
 6. Make a minimal live Bedrock call and require a `READY` response.
 7. Run `agentcore validate`.
