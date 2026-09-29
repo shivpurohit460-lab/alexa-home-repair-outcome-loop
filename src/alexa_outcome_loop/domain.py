@@ -31,6 +31,7 @@ class HomeState:
     temperature_c: float = 30.0
     hvac_running: bool = False
     observed_at: str = field(default_factory=utc_now)
+    source: str = "synthetic_thermostat"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -46,8 +47,10 @@ class RepairCase:
     service_status: ServiceStatus = ServiceStatus.NOT_BOOKED
     provider_name: str | None = None
     provider_reference: str | None = None
+    provider_completed_at: str | None = None
     escalation_count: int = 0
     last_failure_reason: str | None = None
+    last_recovery_note: str | None = None
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
 
