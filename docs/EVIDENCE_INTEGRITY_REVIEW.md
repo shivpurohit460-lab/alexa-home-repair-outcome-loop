@@ -24,3 +24,9 @@ All six MCP operation names, the seven-step judge story, public page and existin
 2. Verify negative tests reject false closure and invalid state transitions; demonstrate a deliberate mutant is caught.
 3. Have a separate reviewer attack clock boundaries, spoofed timestamps and provenance, cross-case/state isolation and time-of-check/time-of-use. This narrow patch does not solve all production risks.
 4. Preserve `main`, public GitHub Pages, Devpost, and owner-controlled submission. No merge or release before review.
+
+The recovery gate additionally compares the exact in-memory observation snapshot
+(provider timestamp, reading timestamp, temperature and source) against the one
+that established the last failed verification. Any intervening observation must
+be reverified. This is a bounded sequential check, not transactional concurrent
+integrity or cryptographic source authentication.
