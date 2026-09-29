@@ -50,7 +50,7 @@ repository did **not** independently attest to real-world sensor evidence.
 | External Claude Round 2 | original GREEN `04e2724b...` | Claude reported 48 pass on Python 3.12; six red failures replicated. |
 | New F7/F7b RED repro | `98214af31fc5f0c55118d5ff87c15f616e3ebe0b`, [run 36538592698](https://github.com/shivpurohit460-lab/alexa-home-repair-outcome-loop/actions/runs/36538592698) | **11 intentionally failing / 58 passing, Ruff pass**, EACH on Python 3.11 and 3.13. |
 | Isolated fixed code + expanded prompt checks | `d0ac10a6534ec2f40e77880fa57d34d2e27a3184`, [run 36538974065](https://github.com/shivpurohit460-lab/alexa-home-repair-outcome-loop/actions/runs/36538974065) | **70 passing, 4 dependency warnings, Ruff pass**, EACH on Python 3.11 and 3.13. |
-| One deliberate lock removal mutation | isolated branch `audit/2026-09-29-mutation-lock`, separate CI | Pending results at initial authoring. Must fail the new cross-thread lock-ownership test to substantiate the coverage improvement. |
+| One deliberate lock removal mutation | `9892b501914349bb47b253f342029265a3e2d2f8` on isolated `audit/2026-09-29-mutation-lock`, [run 36539074854](https://github.com/shivpurohit460-lab/alexa-home-repair-outcome-loop/actions/runs/36539074854) | **Precisely the new lock-ownership test FAILED**, 69 other tests passed and Ruff passed in EACH Python 3.11 and 3.13 CI job. This red branch intentionally stays unmerged. |
 
 Passing CI is NOT independent security certification; a separate reviewer must challenge
 the revised exact head before any change is promoted.
