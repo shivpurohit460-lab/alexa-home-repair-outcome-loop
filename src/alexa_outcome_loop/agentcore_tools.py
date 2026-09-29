@@ -91,7 +91,7 @@ def read_home_state(case_id: str) -> dict:
 
 @tool
 def verify_outcome(case_id: str, tolerance_c: float = 1.0) -> dict:
-    """Verify provider completion against observable home-state evidence."""
+    """Check synthetic provider completion against synthetic home-state evidence."""
     result = domain_tools.verify_outcome(case_id, tolerance_c)
     return _record(
         "verify_outcome",
@@ -102,7 +102,7 @@ def verify_outcome(case_id: str, tolerance_c: float = 1.0) -> dict:
 
 @tool
 def reopen_or_escalate_case(case_id: str, reason: str | None = None) -> dict:
-    """Keep responsibility open when the user's intended outcome is not verified."""
+    """Reopen only when a fresh failed verification proves synthetic non-recovery."""
     result = domain_tools.reopen_or_escalate_case(case_id, reason)
     return _record(
         "reopen_or_escalate_case",
