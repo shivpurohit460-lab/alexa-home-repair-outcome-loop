@@ -1,0 +1,111 @@
+name: Claude Round 2 offline transport
+on:
+  push:
+    branches:
+      - audit/2026-09-29-round2-transport
+permissions:
+  contents: read
+jobs:
+  archives:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Produce immutable base red green snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p source_bundle
+          SHA_BASE=3d396517485d8096da91397e3adf142ac7e7d7ca
+          SHA_RED=746638fd97c067ccb1726cd774e8783284f93c66
+          SHA_GREEN=04e2724b00f4ecde46677ba8533e6035572bcbce
+          for name in BASE RED GREEN; do
+            var="SHA_${name}"
+            sha="${!var}"
+            git cat-file -e "${sha}^{commit}"
+            git archive --format=zip --prefix="${name}/" --output="source_bundle/${name}.zip" "${sha}"
+            echo "${name},${sha},$(git rev-parse "${sha}^{tree}")" >> source_bundle/COMMIT_TREE_MANIFEST.csv
+          done
+          (
+            cd source_bundle
+            sha256sum BASE.zip RED.zip GREEN.zip > ARCHIVES_SHA256.txt
+            unzip -t BASE.zip >/dev/null
+            unzip -t RED.zip >/dev/null
+            unzip -t GREEN.zip >/dev/null
+          )
+          cat > source_bundle/00_READ_ME_FIRST.md <<'EOF'
+          # Alexa+ PR #11 — Offline source transport
+
+          This is the **actual source code**, not a link-only instruction bundle.
+          GitHub Actions generated BASE.zip, RED.zip, and GREEN.zip using
+          `git archive` directly from the three exact immutable git commits.
+          Compare `COMMIT_TREE_MANIFEST.csv` and `ARCHIVES_SHA256.txt`.
+          Each internal zip extracts under BASE/, RED/, or GREEN/.
+
+          BASE: 3d396517485d8096da91397e3adf142ac7e7d7ca
+          RED: 746638fd97c067ccb1726cd774e8783284f93c66
+          GREEN: 04e2724b00f4ecde46677ba8533e6035572bcbce
+
+          Claude task: read every relevant source and test, review all F1–F10,
+          reproduce six RED failures where possible, verify GREEN, challenge
+          F4 concurrency, F7 caller-tolerance and note handling, and F8
+          missing-evidence handoff. Run mutation test in a throwaway copy.
+          Do not merge, push, deploy, or make claims about live sensors/AWS.
+
+          If dependencies are unavailable, static review is valid but mark
+          runtime test results INCONCLUSIVE. GitHub CI previous evidence:
+          RED run 36534037166: Python3.11/3.13 each 6 fail, 37 pass.
+          GREEN run 36534508472: Python3.11/3.13 each 48 pass.
+          Independent Claude environment must not substitute these as its tests.
+          EOF
+      - name: Upload source code archives
+        uses: actions/upload-artifact@v4
+        with:
+          name: alexa-pr11-source-BASEREDGREEN
+          path: source_bundle/*
+          if-no-files-found: error
+          retention-days: 14
+  offline-wheels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 04e2724b00f4ecde46677ba8533e6035572bcbce
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Resolve Python 3.12 Linux offline wheelhouse
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p wheelhouse
+          python - <<'PY' > /tmp/alexa-dependencies.txt
+          import tomllib
+          with open('pyproject.toml','rb') as f:
+              data=tomllib.load(f)
+          for package in data['project']['dependencies'] + data['project']['optional-dependencies']['dev'] + data['build-system']['requires']:
+              print(package)
+          PY
+          python -m pip download --only-binary=:all: -d wheelhouse -r /tmp/alexa-dependencies.txt
+          cp /tmp/alexa-dependencies.txt wheelhouse/REQUIREMENTS.txt
+          (cd wheelhouse && sha256sum -- *whl > WHEELS_SHA256.txt)
+          du -sh wheelhouse
+      - name: Validate offline pytest and Ruff installation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv /tmp/alexa-offline
+          /tmp/alexa-offline/bin/python -m pip install --no-index --find-links wheelhouse -r wheelhouse/REQUIREMENTS.txt
+          /tmp/alexa-offline/bin/python -m pip install --no-index --no-build-isolation --find-links wheelhouse '.[dev]'
+          /tmp/alexa-offline/bin/ruff check .
+          /tmp/alexa-offline/bin/pytest -q
+      - name: Upload offline Python 3.12 wheelhouse
+        uses: actions/upload-artifact@v4
+        with:
+          name: alexa-pr11-offline-py312-linux-wheels
+          path: wheelhouse/*
+          if-no-files-found: error
+          retention-days: 14
