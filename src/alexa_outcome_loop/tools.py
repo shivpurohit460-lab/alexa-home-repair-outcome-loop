@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 from math import isfinite
 
 from .domain import (
+    DEFAULT_VERIFICATION_TOLERANCE_C,
     MAX_SIMULATED_TEMPERATURE_C,
     MIN_SIMULATED_TEMPERATURE_C,
     CaseStatus,
@@ -38,6 +39,10 @@ def create_repair_case(
         "success_criterion": {
             "type": "temperature_threshold",
             "target_temperature_c": case.target_temperature_c,
+            "verification_tolerance_c": case.verification_tolerance_c,
+            "acceptable_temperature_c": (
+                case.target_temperature_c + case.verification_tolerance_c
+            ),
             "meaning": "The workflow remains open until home-state evidence supports recovery.",
         },
     }
@@ -116,13 +121,19 @@ def _aware_timestamp(value: str | None) -> datetime | None:
 def verify_outcome(case_id: str, tolerance_c: float = 1.0) -> dict:
     """Simulator-only postcondition check: provider + fresh post-work reading.
 
-    Freshness <=15min and future-clock <=30sec are prototype policy values,
-    not guarantees of real-device provenance. Unusable evidence is inconclusive.
+    Freshness <=15min and future-clock <=30sec are prototype policy values.
+    Tolerance is fixed per case at creation, never adjusted at verification.
+    No authenticated real-device provenance is claimed; missing evidence is inconclusive.
     """
-    if not 0.0 <= tolerance_c <= 5.0:
-        raise ValueError("tolerance_c must be between 0 and 5")
-
     case = STORE.get_case(case_id)
+    if (
+        isinstance(tolerance_c, bool)
+        or not isinstance(tolerance_c, (int, float))
+        or not isfinite(tolerance_c)
+        or tolerance_c != case.verification_tolerance_c
+        or case.verification_tolerance_c != DEFAULT_VERIFICATION_TOLERANCE_C
+    ):
+        raise ValueError("tolerance_c is fixed at case creation and cannot be overridden")
     if case.status == CaseStatus.VERIFIED_RESOLVED:
         # A closed case retains its original evidence; a subsequent check does
         # not claim that the room is STILL cool at the time of the new request.
@@ -154,7 +165,7 @@ def verify_outcome(case_id: str, tolerance_c: float = 1.0) -> dict:
     provider_complete = case.service_status == ServiceStatus.PROVIDER_COMPLETE
     provider_at = _aware_timestamp(case.provider_completed_at)
     observed_at = _aware_timestamp(state.observed_at)
-    threshold = case.target_temperature_c + float(tolerance_c)
+    threshold = case.target_temperature_c + case.verification_tolerance_c
 
     if not provider_complete:
         evidence_status = "provider_pending"
@@ -283,13 +294,24 @@ def reopen_or_escalate_case(case_id: str, reason: str | None = None) -> dict:
     ):
         raise ValueError("Verification expired; fresh evidence required before recovery")
 
+    # Bound the untrusted user narrative before any state mutation. A length
+    # cap limits resource abuse; it does NOT make note text trusted instructions.
+    if reason is None:
+        note = None
+    elif not isinstance(reason, str):
+        raise TypeError("recovery reason must be text or None")
+    elif len(reason) > 500:
+        raise ValueError("recovery note is limited to 500 characters")
+    else:
+        note = reason.strip() or None
+
     case.escalation_count += 1
     case.service_status = ServiceStatus.REOPENED
     case.provider_completed_at = None
     case.failed_evidence_snapshot = None
     case.status = CaseStatus.ESCALATED if case.escalation_count > 1 else CaseStatus.REOPENED
     # User-supplied note is not evidence; preserve verified failure reason.
-    case.last_recovery_note = reason.strip() if reason and reason.strip() else None
+    case.last_recovery_note = note
     case.touch()
     return {
         "case_id": case.case_id,
@@ -297,6 +319,9 @@ def reopen_or_escalate_case(case_id: str, reason: str | None = None) -> dict:
         "escalation_count": case.escalation_count,
         "reason": case.last_failure_reason,
         "recovery_note": case.last_recovery_note,
+        "recovery_note_trust": (
+            "untrusted_user_input" if case.last_recovery_note else "none"
+        ),
         "provider_reference": case.provider_reference,
         "service_status": case.service_status.value,
         "case_status": case.status.value,
