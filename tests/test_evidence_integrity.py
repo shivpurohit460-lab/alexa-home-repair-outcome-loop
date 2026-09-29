@@ -193,3 +193,25 @@ def test_provider_incomplete_state_is_inconclusive() -> None:
     assert result["verification_state"] == "inconclusive"
     assert result["evidence_status"] == "provider_pending"
     assert result["recommendation"] == "await_provider_completion"
+
+
+@pytest.mark.parametrize("bad_value", [None, "24.4", True])
+def test_non_numeric_corrupted_observation_cannot_close_case(bad_value: object) -> None:
+    case_id = completed_case()
+    STORE.get_home_state(case_id).temperature_c = bad_value
+
+    result = verify_outcome(case_id)
+
+    assert result["evidence_status"] == "invalid_temperature"
+    assert result["verification_state"] == "inconclusive"
+
+
+def test_changed_observation_requires_reverification_before_recovery() -> None:
+    case_id = completed_case(temperature_c=29.2)
+    assert verify_outcome(case_id)["verification_state"] == "not_recovered"
+    HOME_SIMULATOR.set_state(case_id, temperature_c=24.4, hvac_running=True)
+
+    with pytest.raises(ValueError, match="reverification required"):
+        reopen_or_escalate_case(case_id)
+    assert STORE.get_case(case_id).escalation_count == 0
+    assert verify_outcome(case_id)["verified"] is True
