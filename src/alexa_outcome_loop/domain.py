@@ -4,6 +4,10 @@ from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
 
+# Deliberately broad synthetic demonstration range, not sensor calibration.
+MIN_SIMULATED_TEMPERATURE_C = -20.0
+MAX_SIMULATED_TEMPERATURE_C = 60.0
+
 
 def utc_now() -> str:
     return datetime.now(UTC).isoformat()
@@ -31,6 +35,7 @@ class HomeState:
     temperature_c: float = 30.0
     hvac_running: bool = False
     observed_at: str = field(default_factory=utc_now)
+    source: str = "synthetic_thermostat"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -46,8 +51,12 @@ class RepairCase:
     service_status: ServiceStatus = ServiceStatus.NOT_BOOKED
     provider_name: str | None = None
     provider_reference: str | None = None
+    provider_completed_at: str | None = None
     escalation_count: int = 0
     last_failure_reason: str | None = None
+    last_recovery_note: str | None = None
+    failed_evidence_snapshot: tuple[str | None, str, float, str] | None = None
+    verified_evidence_snapshot: tuple[str, str, float, str, float] | None = None
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
 
