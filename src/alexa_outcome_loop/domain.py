@@ -51,6 +51,7 @@ class RepairCase:
     escalation_count: int = 0
     last_failure_reason: str | None = None
     last_recovery_note: str | None = None
+    failed_evidence_snapshot: tuple[str | None, str, float, str] | None = None
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
 
