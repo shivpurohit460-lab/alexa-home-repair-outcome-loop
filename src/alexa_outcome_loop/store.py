@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import wraps
 from threading import RLock
 from uuid import uuid4
 
@@ -55,3 +56,17 @@ class InMemoryStore:
 
 
 STORE = InMemoryStore()
+
+
+def synchronized_store(operation):
+    """Serialize one-process demo operations over the existing reentrant lock.
+
+    This protects in-process state transitions, not tenant authorization or
+    independent worker processes. All public case operations must use it.
+    """
+    @wraps(operation)
+    def wrapper(*args, **kwargs):
+        with STORE._lock:
+            return operation(*args, **kwargs)
+
+    return wrapper
