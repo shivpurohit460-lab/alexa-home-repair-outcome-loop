@@ -8,6 +8,9 @@ from enum import StrEnum
 MIN_SIMULATED_TEMPERATURE_C = -20.0
 MAX_SIMULATED_TEMPERATURE_C = 60.0
 
+# A case's acceptance tolerance is fixed at creation, not chosen at verification.
+DEFAULT_VERIFICATION_TOLERANCE_C = 1.0
+
 
 def utc_now() -> str:
     return datetime.now(UTC).isoformat()
@@ -47,6 +50,7 @@ class RepairCase:
     issue: str
     room: str
     target_temperature_c: float
+    verification_tolerance_c: float = DEFAULT_VERIFICATION_TOLERANCE_C
     status: CaseStatus = CaseStatus.OPEN
     service_status: ServiceStatus = ServiceStatus.NOT_BOOKED
     provider_name: str | None = None
