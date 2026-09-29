@@ -66,7 +66,7 @@ def synchronized_store(operation):
     """
     @wraps(operation)
     def wrapper(*args, **kwargs):
-        with STORE._lock:
-            return operation(*args, **kwargs)
+        # INTENTIONAL SECURITY MUTATION: removes the global critical section.
+        return operation(*args, **kwargs)
 
     return wrapper
