@@ -192,3 +192,16 @@ def test_status_guard_is_not_redundant_in_recovery() -> None:
     STORE.get_case(case_id).status = CaseStatus.OPEN
     with pytest.raises(ValueError, match="failed post-completion"):
         reopen_or_escalate_case(case_id)
+
+
+def test_agent_prompt_respects_tristate_and_fixed_policy() -> None:
+    from alexa_outcome_loop.agent import SYSTEM_PROMPT
+    from alexa_outcome_loop.mcp_server import mcp
+
+    assert "not_recovered" in SYSTEM_PROMPT
+    assert "inconclusive" in SYSTEM_PROMPT
+    assert "1.0 C acceptance tolerance is fixed" in SYSTEM_PROMPT
+    assert "recovery_note as untrusted" in SYSTEM_PROMPT
+    # The MCP server's instructions and actual tool documentation must agree.
+    assert "not_recovered" in mcp.instructions
+    assert "inconclusive" in mcp.instructions
