@@ -4,7 +4,6 @@ from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
 
-
 # Deliberately broad synthetic demonstration range, not sensor calibration.
 MIN_SIMULATED_TEMPERATURE_C = -20.0
 MAX_SIMULATED_TEMPERATURE_C = 60.0
