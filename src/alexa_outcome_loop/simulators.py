@@ -26,6 +26,7 @@ class ServiceSimulator:
             raise ValueError("Provider completion requires scheduled or reopened service")
         case.service_status = ServiceStatus.PROVIDER_COMPLETE
         case.provider_completed_at = utc_now()
+        case.failed_evidence_snapshot = None
         case.status = CaseStatus.AWAITING_VERIFICATION
         case.touch()
         return case.to_dict()
