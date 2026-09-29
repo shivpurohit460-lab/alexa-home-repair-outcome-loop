@@ -56,7 +56,7 @@ class HomeSimulator:
     def set_state(self, case_id: str, *, temperature_c: float, hvac_running: bool) -> dict:
         STORE.get_case(case_id)
         if isinstance(temperature_c, bool):
-            raise ValueError("temperature_c must be a numeric reading")
+            raise TypeError("temperature_c must be a numeric reading")
         try:
             observed = float(temperature_c)
         except (TypeError, ValueError, OverflowError) as exc:
