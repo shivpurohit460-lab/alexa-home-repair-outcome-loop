@@ -63,7 +63,7 @@ def test_stale_but_post_completion_good_reading_is_inconclusive() -> None:
 
     assert result["evidence_status"] == "stale_observation"
     assert result["verified"] is False
-    assert result["home_recovered"] is False
+    assert result["home_recovered"] is None
     assert result["verification_state"] == "inconclusive"
 
 
@@ -177,7 +177,7 @@ def test_provider_cannot_report_same_work_complete_twice() -> None:
 def test_verified_closed_case_cannot_be_booked_or_recompleted() -> None:
     case_id = completed_case()
     assert verify_outcome(case_id)["verified"] is True
-    with pytest.raises(ValueError, match="open or reopened"):
+    with pytest.raises(ValueError, match="Service booking requires"):
         book_home_service(case_id)
     with pytest.raises(ValueError, match="already verified"):
         SERVICE_SIMULATOR.mark_provider_complete(case_id)
