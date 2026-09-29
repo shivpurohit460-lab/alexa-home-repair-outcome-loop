@@ -5,6 +5,11 @@ from datetime import UTC, datetime
 from enum import StrEnum
 
 
+# Deliberately broad synthetic demonstration range, not sensor calibration.
+MIN_SIMULATED_TEMPERATURE_C = -20.0
+MAX_SIMULATED_TEMPERATURE_C = 60.0
+
+
 def utc_now() -> str:
     return datetime.now(UTC).isoformat()
 
@@ -52,6 +57,7 @@ class RepairCase:
     last_failure_reason: str | None = None
     last_recovery_note: str | None = None
     failed_evidence_snapshot: tuple[str | None, str, float, str] | None = None
+    verified_evidence_snapshot: tuple[str, str, float, str, float] | None = None
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
 
