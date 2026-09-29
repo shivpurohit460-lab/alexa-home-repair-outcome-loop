@@ -52,7 +52,7 @@ def read_home_state(case_id: str) -> dict:
 
 @mcp.tool()
 def verify_outcome(case_id: str, tolerance_c: float = 1.0) -> dict:
-    """Verify provider completion against real-world outcome evidence."""
+    """Check synthetic provider completion against synthetic thermostat evidence."""
     return tools.verify_outcome(case_id, tolerance_c)
 
 
