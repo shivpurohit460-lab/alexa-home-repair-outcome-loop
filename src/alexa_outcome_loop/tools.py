@@ -49,6 +49,7 @@ def book_home_service(
     if case.status not in {CaseStatus.OPEN, CaseStatus.REOPENED}:
         raise ValueError("Service booking requires an open or reopened case")
     case.provider_completed_at = None
+    case.failed_evidence_snapshot = None
     case.provider_name = provider_name.strip() or "CoolCare HVAC"
     case.provider_reference = f"svc-{case_id.split('-', 1)[-1]}"
     case.service_status = ServiceStatus.SCHEDULED
@@ -135,7 +136,11 @@ def verify_outcome(case_id: str, tolerance_c: float = 1.0) -> dict:
         evidence_status = "pre_completion_observation"
     elif now - observed_at > timedelta(minutes=15):
         evidence_status = "stale_observation"
-    elif not isfinite(state.temperature_c):
+    elif (
+        isinstance(state.temperature_c, bool)
+        or not isinstance(state.temperature_c, (int, float))
+        or not isfinite(state.temperature_c)
+    ):
         evidence_status = "invalid_temperature"
     else:
         evidence_status = "fresh_post_completion"
@@ -148,12 +153,14 @@ def verify_outcome(case_id: str, tolerance_c: float = 1.0) -> dict:
     if verified:
         case.status = CaseStatus.VERIFIED_RESOLVED
         case.last_failure_reason = None
+        case.failed_evidence_snapshot = None
         verification_state = "verified"
         recommendation = "close_case"
         explanation = "Synthetic provider completion and fresh thermostat data agree."
     elif evidence_status != "fresh_post_completion":
         case.status = CaseStatus.AWAITING_VERIFICATION
         case.last_failure_reason = None
+        case.failed_evidence_snapshot = None
         verification_state = "inconclusive"
         recommendation = (
             "await_provider_completion" if not provider_complete else "await_fresh_evidence"
@@ -163,6 +170,9 @@ def verify_outcome(case_id: str, tolerance_c: float = 1.0) -> dict:
         case.status = CaseStatus.AWAITING_VERIFICATION
         case.last_failure_reason = (
             f"temperature_{state.temperature_c:.1f}C_above_threshold_{threshold:.1f}C"
+        )
+        case.failed_evidence_snapshot = (
+            case.provider_completed_at, state.observed_at, state.temperature_c, state.source
         )
         verification_state = "not_recovered"
         recommendation = "reopen_or_escalate"
@@ -203,10 +213,17 @@ def reopen_or_escalate_case(case_id: str, reason: str | None = None) -> dict:
         or not case.last_failure_reason
     ):
         raise ValueError("Recovery requires a failed post-completion outcome verification")
+    state = STORE.get_home_state(case_id)
+    current_evidence = (
+        case.provider_completed_at, state.observed_at, state.temperature_c, state.source
+    )
+    if case.failed_evidence_snapshot != current_evidence:
+        raise ValueError("Evidence changed; reverification required before recovery")
 
     case.escalation_count += 1
     case.service_status = ServiceStatus.REOPENED
     case.provider_completed_at = None
+    case.failed_evidence_snapshot = None
     case.status = CaseStatus.ESCALATED if case.escalation_count > 1 else CaseStatus.REOPENED
     # User-supplied note is not evidence; preserve verified failure reason.
     case.last_recovery_note = reason.strip() if reason and reason.strip() else None
